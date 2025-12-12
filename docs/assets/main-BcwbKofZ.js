@@ -1,1 +1,0 @@
-import{aE as t}from"./index-CjCmZfvA.js";const n=t("main",{state:()=>({counter:0,selectedSourceId:null}),getters:{count:({counter:e})=>e,firmwareSourceId:({selectedSourceId:e})=>e},actions:{incrementCounter(e){this.counter+=e}},persist:!0});export{n as u};

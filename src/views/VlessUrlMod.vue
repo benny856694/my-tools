@@ -61,12 +61,6 @@
       vless://uuid@ip:port?remarks=server1 will be converted to
       vless://uuid@ip:port?remarks=server1(US).
     </NText>
-    <p>
-      <NText type="warning">
-        Note: please use http to run this tool, since the api to look up
-        geolocation is accessed via http</NText
-      >
-    </p>
   </div>
 </template>
 

@@ -23,18 +23,46 @@ export function replaceVlessName(url: string, newName: string) {
   return urlObj.toString()
 }
 
+async function getIpAddress(domain: string): Promise<string[]> {
+  try {
+    const response = await fetch(`https://dns.google/resolve?name=${domain}`)
+    const data = await response.json()
+
+    if (data.Answer) {
+      // Filter for Type 1 (A Record / IPv4)
+      const ipRecords = data.Answer.filter((record) => record.type === 1)
+
+      if (ipRecords.length > 0) {
+        return ipRecords.map((r) => r.data) // Returns an array of IPs
+      }
+    }
+
+    throw new Error(`no ip found for ${domain}`)
+  } catch (error) {
+    console.error('DNS lookup failed:', error)
+    throw error
+  }
+}
+
+// Usage
+// getIpAddress('example.com').then(ips => console.log(ips));
+
 //get the geolocation from the vless URL host name by calling http://ip-api.com/json/{g.mumi.uk}?fields=countryCode
 //return format: { countryCode: 'US' }
 export async function getGeolocationFromVlessUrl(url: string) {
   const { hostName } = parseVlessUrl(url)
-  const response = await fetch(
-    `http://ip-api.com/json/${hostName}?fields=countryCode`
-  )
+  const ips = await getIpAddress(hostName)
+  //get ip of the domain
+  const response = await fetch(`https://ipinfo.io/${ips[0]}`, {
+    headers: {
+      authorization: `Bearer ${import.meta.env.VITE_IPINFO_TOKEN}`
+    }
+  })
   if (!response.ok) {
     throw new Error('Failed to fetch geolocation data')
   }
   const data = await response.json()
-  return data.countryCode
+  return data.country
 }
 
 //parse the vless urls and append the geolocation country code to the name
