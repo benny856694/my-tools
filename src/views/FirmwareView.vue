@@ -57,6 +57,16 @@
         type="textarea"
         placeholder="推送结果"
         readonly
+        :autosize="{ minRows: 8 }"
+      />
+    </div>
+    <div class="mt-4">
+      <h3>升级日志</h3>
+      <NInput
+        :value="upgradeLogText"
+        type="textarea"
+        placeholder="升级日志"
+        readonly
         :autosize="{ minRows: 5 }"
       />
     </div>
@@ -90,7 +100,7 @@ const deviceCurVer = ref<DeviceCurrentVersion>(DeviceCurrentVersion.China)
 const targetFirmwareId = ref<Id<'firmwares'> | null>(null)
 const sn = ref('')
 const updateResult = ref<string>('')
-const { selectedSourceId } = storeToRefs( useMainStore())
+const { selectedSourceId } = storeToRefs(useMainStore())
 
 const curVerOptions = [
   { label: '中国大陆', value: DeviceCurrentVersion.China },
@@ -106,6 +116,13 @@ const sourceOptions = computed(() => {
     : []
 })
 
+interface FirmwareUpgradeLogEntry {
+  id: string
+  time: string
+  sn: string
+  result: string
+}
+
 const targetFirmwareOptions = computed(() => {
   return targetFirmwares.value
     ? targetFirmwares.value.map((fw: Doc<'firmwares'>) => ({
@@ -114,6 +131,28 @@ const targetFirmwareOptions = computed(() => {
       }))
     : []
 })
+
+const upgradeLogs = ref<FirmwareUpgradeLogEntry[]>([])
+
+const upgradeLogText = computed(() =>
+  upgradeLogs.value
+    .map((entry) => `[${entry.time}] SN: ${entry.sn} ${entry.result}`)
+    .join('\n\n')
+)
+
+const addLogEntry = (result: string) => {
+  upgradeLogs.value.unshift({
+    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    time: new Date().toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    }),
+    sn: sn.value || '-',
+    result
+  })
+}
 
 const url = computed(() => {
   if (!targetFirmwareId.value) {
@@ -197,9 +236,13 @@ const handleUpdate = async (e: MouseEvent) => {
       }
     })
     const text = await resp.json()
-    updateResult.value = JSON.stringify(text, null, 2)
+    const resultText = JSON.stringify(text, null, 2)
+    updateResult.value = resultText
+    addLogEntry(text.message)
   } catch (err) {
-    updateResult.value = `错误: ${err}`
+    const errorText = `错误: ${err}`
+    updateResult.value = errorText
+    addLogEntry(errorText)
   }
 }
 
