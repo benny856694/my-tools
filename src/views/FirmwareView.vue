@@ -67,7 +67,7 @@
         type="textarea"
         placeholder="升级日志"
         readonly
-        :autosize="{ minRows: 5 }"
+        style="height: 300px; overflow: auto;"
       />
     </div>
   </div>
@@ -137,7 +137,7 @@ const upgradeLogs = ref<FirmwareUpgradeLogEntry[]>([])
 const upgradeLogText = computed(() =>
   upgradeLogs.value
     .map((entry) => `[${entry.time}] SN: ${entry.sn} ${entry.result}`)
-    .join('\n\n')
+    .join('\n')
 )
 
 const addLogEntry = (result: string) => {
