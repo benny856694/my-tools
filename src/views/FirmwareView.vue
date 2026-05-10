@@ -61,7 +61,6 @@
       />
     </div>
     <div class="mt-4">
-      <h3>升级日志</h3>
       <NInput
         :value="upgradeLogText"
         type="textarea"
