@@ -16,10 +16,24 @@ npm run coverage         # Vitest with coverage (80% thresholds for functions/br
 npm run test:e2e         # Cypress E2E interactive (starts dev server + Cypress concurrently)
 npm run test:e2e:headless # Cypress E2E headless
 npm run test:e2e:wsl     # Cypress E2E under WSL
+npm run test:e2e:setup   # First-time E2E setup: install Cypress binary + clear cache
 
 npm run lint             # ESLint --fix on src/
 npm run format           # Prettier format all files
 ```
+
+The `test:e2e` scripts use `env` for inline env vars — these work on macOS/Linux and WSL. On Windows PowerShell, set the env vars first or use WSL.
+
+## Environment variables
+
+Create a `.env.local` file (gitignored) with:
+
+```
+VITE_CONVEX_URL=<your-convex-deployment-url>
+VITE_IPINFO_TOKEN=<ipinfo.io-api-token>
+```
+
+`VITE_CONVEX_URL` is consumed by the `convex-vue` plugin in `src/main.ts`. `VITE_IPINFO_TOKEN` is used by the VLESS URL geolocation feature in `src/utils/utils.ts`.
 
 ## Architecture
 
@@ -31,7 +45,8 @@ Vue 3 SPA built with Vite, deployed to **GitHub Pages** at the path `/my-tools/`
 - **Layout**: `App.vue` — provides the shell: header with dark mode toggle, collapsible sidebar (Naive UI `n-menu`), and `<router-view>`. Dark mode preference stored in localStorage.
 - **Routing** (`src/router/index.ts`): Four lazy-loaded routes — `/` (HelloWorld), `/vlessmod` (VLESS URL modifier), `/firmware` (firmware push), `/firmman` (firmware CRUD). The `/firmman` route is hidden from the sidebar and accessed via Ctrl+Click on the header title.
 - **State** (`src/store/main.ts`): Single Pinia store holding `counter` (HelloWorld demo) and `selectedSourceId` (persisted firmware source selection).
-- **UI**: Naive UI component library with Sass-styled Inter font. Tailwind CSS 4 via PostCSS plugin. FontAwesome 7 icons registered globally in `src/components/global/vendor/icons.ts`.
+- **UI**: Naive UI component library with Sass-styled Inter font. Tailwind CSS 4 via PostCSS plugin (`@tailwindcss/postcss`). FontAwesome 7 icons registered globally in `src/components/global/vendor/icons.ts`.
+- **Theme** (`src/lib/theme.ts`): Custom Naive UI `GlobalThemeOverrides` with color palette for both light and dark modes. Applied in `App.vue`.
 
 ### Backend — Convex (convex/)
 
@@ -44,7 +59,11 @@ API in `convex/pet.ts`: mutations `addFirmware`/`removeFirmware`, queries `getFi
 ### Testing
 
 - **Unit** (`test/unit/`): Vitest with `happy-dom` environment. `test/unit/testhelper.ts` provides a `mountComponent()` wrapper that sets up Pinia, global components, and router.
-- **E2E** (`test/e2e/`): Cypress with Cucumber/BDD preprocessor. Gherkin `.feature` files in `test/e2e/specs/features/`, step definitions in TypeScript. Code coverage instrumented via `vite-plugin-istanbul` (only when `CYPRESS_TEST=true`).
+- **E2E** (`test/e2e/`): Cypress with Cucumber/BDD preprocessor. Gherkin `.feature` files in `test/e2e/specs/features/`, step definitions in TypeScript. Custom Cypress commands (`dataCy`, `getTestElement`, `getTestElementByClass`) registered in `test/e2e/support/commands.ts`. Code coverage instrumented via `vite-plugin-istanbul` (only when `CYPRESS_TEST=true`).
+
+### Tailwind CSS v4
+
+Tailwind v4 uses a CSS-first configuration. The entry point is `src/styles/vendor/_tailwind.css` which imports `tailwindcss/theme.css` and `tailwindcss/utilities.css` via `@import`. Both `@tailwindcss/vite` and `@tailwindcss/postcss` are configured in `vite.config.ts` — the PostCSS plugin is the one that actually processes the styles.
 
 ## Key conventions
 
@@ -52,3 +71,5 @@ API in `convex/pet.ts`: mutations `addFirmware`/`removeFirmware`, queries `getFi
 - The app base path is `/my-tools/` — all routes and assets are served under this prefix. When adding links or assets, account for this base.
 - `convex/_generated/` is auto-generated — never edit it directly.
 - The build outputs to `docs/` (not `dist/`). After `npm run deploy`, the docs directory is committed and pushed for GitHub Pages deployment.
+- Global Vue plugins are registered through the `globalComponents` pattern in `src/components/global/index.ts`, which aggregates vendor plugins (Naive UI, FontAwesome) into a single Vue plugin.
+- `pinia-plugin-persistedstate` automatically persists the Pinia store to localStorage. The `main` store in `src/store/main.ts` has `persist: true`.
