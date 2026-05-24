@@ -1,6 +1,6 @@
 <template>
-  <div class="p-4">
-    <div class="mt-2">
+  <div class="p-4 flex flex-col">
+    <div ref="formRef" class="shrink-0">
       <div v-if="isTargetFirmwarePending || isSourcesPending">Loading...</div>
       <n-form v-else inline :label-width="180">
         <NFormItem path="md5" label="SN">
@@ -60,13 +60,14 @@
         :autosize="{ minRows: 8 }"
       />
     </div>
-    <div class="mt-4">
-      <NInput
-        :value="upgradeLogText"
-        type="textarea"
-        placeholder="升级日志"
-        readonly
-        style="height: 300px; overflow: auto;"
+    <div class="mt-4 flex-1 min-h-0">
+      <n-data-table
+        :columns="logColumns"
+        :data="upgradeLogs"
+        size="small"
+        :max-height="tableMaxHeight"
+        :bordered="true"
+        :single-line="false"
       />
     </div>
   </div>
@@ -76,9 +77,9 @@
 import { useConvexQuery } from 'convex-vue'
 import { api } from '../../convex/_generated/api'
 import { Doc, Id } from '../../convex/_generated/dataModel'
-import { NForm, NInput, NButton, NFormItem, NSelect } from 'naive-ui'
+import { NForm, NInput, NButton, NFormItem, NSelect, NDataTable } from 'naive-ui'
 
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, onMounted, onActivated, onBeforeUnmount } from 'vue'
 import { OpenInNewFilled } from '@vicons/material'
 import { useMainStore } from '@/store'
 import { storeToRefs } from 'pinia'
@@ -133,11 +134,11 @@ const targetFirmwareOptions = computed(() => {
 
 const upgradeLogs = ref<FirmwareUpgradeLogEntry[]>([])
 
-const upgradeLogText = computed(() =>
-  upgradeLogs.value
-    .map((entry) => `[${entry.time}] SN: ${entry.sn} ${entry.result}`)
-    .join('\n')
-)
+const logColumns = [
+  { title: '时间', key: 'time', width: 90 },
+  { title: 'SN', key: 'sn', width: 160 },
+  { title: '结果', key: 'result' }
+]
 
 const addLogEntry = (result: string) => {
   upgradeLogs.value.unshift({
@@ -228,7 +229,6 @@ const handleUpdate = async (e: MouseEvent) => {
   e.preventDefault()
   try {
     updateResult.value = '升级中...'
-    //change the fetch header: accept-language to en-US,en;q=0.9
     const resp = await fetch(url.value, {
       headers: {
         'Accept-Language': 'zh-CN'
@@ -259,7 +259,6 @@ const testDownload = async (e: MouseEvent) => {
       updateResult.value = 'Opened firmware URL in a new window'
       return
     }
-    // Fallback for strict popup blockers: create an anchor and click it
     const a = document.createElement('a')
     a.href = firmwareUrl.value
     a.target = '_blank'
@@ -271,6 +270,32 @@ const testDownload = async (e: MouseEvent) => {
     updateResult.value = `Error: ${err}`
   }
 }
+
+const formRef = ref<HTMLElement | null>(null)
+const tableMaxHeight = ref(300)
+let resizeObserver: ResizeObserver | null = null
+
+const updateTableHeight = () => {
+  if (formRef.value) {
+    const formRect = formRef.value.getBoundingClientRect()
+    const available = window.innerHeight - formRect.bottom - 24
+    tableMaxHeight.value = Math.max(200, available)
+  }
+}
+
+onMounted(() => {
+  resizeObserver = new ResizeObserver(updateTableHeight)
+  if (formRef.value) {
+    resizeObserver.observe(formRef.value)
+  }
+  updateTableHeight()
+})
+
+onActivated(updateTableHeight)
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+})
 </script>
 
 <style lang=""></style>

@@ -57,7 +57,11 @@
             />
           </n-layout-sider>
           <n-layout-content :native-scrollbar="false">
-            <router-view class="m-2" />
+            <router-view v-slot="{ Component }">
+              <KeepAlive>
+                <component :is="Component" class="m-2" />
+              </KeepAlive>
+            </router-view>
           </n-layout-content>
         </n-layout>
       </n-layout>
