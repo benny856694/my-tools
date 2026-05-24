@@ -4,6 +4,7 @@
     :theme="theme"
     :class="{ dark: mode }"
     :theme-overrides="appTheme(darkMode)"
+    :locale="zhCN"
   >
     <NMessageProvider>
       <n-layout position="absolute">
@@ -65,7 +66,7 @@
 </template>
 
 <script setup lang="ts">
-import { darkTheme, lightTheme, NMessageProvider, NMenu, NIcon } from 'naive-ui'
+import { zhCN, darkTheme, lightTheme, NMessageProvider, NMenu, NIcon } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import { computed, ref, watchEffect } from 'vue'
 import type { Component } from 'vue'
@@ -96,10 +97,7 @@ const menuOptions: MenuOption[] = [
         RouterLink,
         {
           to: {
-            name: 'home',
-            params: {
-              lang: 'zh-CN'
-            }
+            name: 'home'
           }
         },
         { default: () => 'Home' }
@@ -130,7 +128,7 @@ const menuOptions: MenuOption[] = [
             name: 'firmware'
           }
         },
-        { default: () => 'Firmwares' }
+        { default: () => '固件推送' }
       ),
     key: 'firmware-view',
     icon: renderIcon(PetsFilled)

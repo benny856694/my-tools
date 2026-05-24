@@ -63,7 +63,6 @@ export const appTheme: (dark?: boolean) => GlobalThemeOverrides = (
   const theme: GlobalThemeOverrides = {
     common: {
       ...colors,
-      cardColor: 'var(--background-color)',
       fontFamily: 'Inter',
       fontSize: '1rem'
     },

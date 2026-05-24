@@ -39,3 +39,21 @@ export const removeFirmware = mutation({
     await ctx.db.delete(args.id)
   }
 })
+
+export const updateFirmware = mutation({
+  args: {
+    id: v.id('firmwares'),
+    name: v.string(),
+    fileName: v.string(),
+    md5: v.string(),
+    size: v.string()
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      name: args.name,
+      fileName: args.fileName,
+      md5: args.md5,
+      size: args.size
+    })
+  }
+})
