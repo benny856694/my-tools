@@ -8,7 +8,9 @@
       "Bash(npx vue-tsc *)",
       "Bash(open *)",
       "Bash(grep *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(npx convex *)",
+      "Bash(git add *)"
     ]
   }
 }

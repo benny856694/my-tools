@@ -6,14 +6,16 @@ export const addFirmware = mutation({
     name: v.string(),
     fileName: v.string(),
     md5: v.string(),
-    size: v.string()
+    size: v.string(),
+    remark: v.optional(v.string())
   },
   handler: async (ctx, args) => {
     await ctx.db.insert('firmwares', {
       name: args.name,
       fileName: args.fileName,
       md5: args.md5,
-      size: args.size
+      size: args.size,
+      remark: args.remark ?? ''
     })
   }
 })
@@ -46,14 +48,16 @@ export const updateFirmware = mutation({
     name: v.string(),
     fileName: v.string(),
     md5: v.string(),
-    size: v.string()
+    size: v.string(),
+    remark: v.optional(v.string())
   },
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, {
       name: args.name,
       fileName: args.fileName,
       md5: args.md5,
-      size: args.size
+      size: args.size,
+      remark: args.remark ?? ''
     })
   }
 })

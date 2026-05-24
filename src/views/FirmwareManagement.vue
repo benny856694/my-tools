@@ -22,6 +22,9 @@
           @keydown.enter.prevent
         />
       </NFormItem>
+      <n-form-item path="remark" label="备注">
+        <NInput v-model:value.trim="formValue.remark" @keydown.enter.prevent />
+      </n-form-item>
       <n-form-item>
         <NButton type="primary" :loading="isAddPending" @click="handleAdd">
           添加
@@ -99,7 +102,7 @@ const filteredData = computed(() => {
   if (!firmwares.value) return []
   if (!filterName.value) return firmwares.value
   const q = filterName.value.toLowerCase()
-  return firmwares.value.filter((f) => f.name.toLowerCase().includes(q))
+  return firmwares.value.filter((f) => f.name.toLowerCase().includes(q) || (f.remark ?? '').toLowerCase().includes(q))
 })
 
 // reset to page 1 whenever filter changes
@@ -109,7 +112,7 @@ interface SortState {
   columnKey: string
   order: 'ascend' | 'descend'
 }
-const sortState = ref<SortState | null>(null)
+const sortState = ref<SortState | null>({ columnKey: '_creationTime', order: 'descend' })
 
 function onSorterChange(sorter: { columnKey: string; order: 'ascend' | 'descend' | false }) {
   if (!sorter.order) {
@@ -132,6 +135,7 @@ const sortedData = computed(() => {
       case 'name':
       case 'fileName':
       case 'md5':
+      case 'remark':
         cmp = String(a[columnKey]).localeCompare(String(b[columnKey]))
         break
       case 'size':
@@ -160,9 +164,22 @@ const { data: firmwares, isPending: isLoading } = useConvexQuery(
   {}
 )
 
-const { mutate: removeFirmware, isPending: isRemoving } = useConvexMutation(
+const { mutate: removeFirmware } = useConvexMutation(
   api.pet.removeFirmware
 )
+
+const deletingRows = ref(new Set<Id<'firmwares'>>())
+
+const handleDelete = async (id: Id<'firmwares'>) => {
+  deletingRows.value = new Set(deletingRows.value).add(id)
+  try {
+    await removeFirmware({ id })
+  } finally {
+    const next = new Set(deletingRows.value)
+    next.delete(id)
+    deletingRows.value = next
+  }
+}
 
 const { mutate: updateFirmware, isPending: isUpdatePending } = useConvexMutation(
   api.pet.updateFirmware
@@ -173,7 +190,8 @@ const editForm = ref({
   name: '',
   md5: '',
   size: '',
-  fileName: ''
+  fileName: '',
+  remark: ''
 })
 
 const pageCount = computed(() =>
@@ -193,13 +211,14 @@ const startEdit = (item: Doc<'firmwares'>) => {
     name: item.name,
     md5: item.md5,
     size: item.size,
-    fileName: item.fileName
+    fileName: item.fileName,
+    remark: item.remark ?? ''
   }
 }
 
 const cancelEdit = () => {
   editingId.value = null
-  editForm.value = { name: '', md5: '', size: '', fileName: '' }
+  editForm.value = { name: '', md5: '', size: '', fileName: '', remark: '' }
 }
 
 const saveEdit = async (id: Id<'firmwares'>) => {
@@ -213,7 +232,7 @@ const columns = computed<DataTableColumn[]>(() => {
   {
     title: 'Name',
     key: 'name' as const,
-    width: 240,
+    width: 120,
     sortOrder: sort?.columnKey === 'name' ? sort.order : false,
     sorter: 'default' as const,
     render(row: Doc<'firmwares'>) {
@@ -229,7 +248,7 @@ const columns = computed<DataTableColumn[]>(() => {
   {
     title: 'File Name',
     key: 'fileName' as const,
-    width: 260,
+    width: 240,
     sortOrder: sort?.columnKey === 'fileName' ? sort.order : false,
     sorter: 'default' as const,
     render(row: Doc<'firmwares'>) {
@@ -277,11 +296,27 @@ const columns = computed<DataTableColumn[]>(() => {
   {
     title: '添加日期',
     key: '_creationTime' as const,
-    width: 170,
+    width: 150,
     sortOrder: sort?.columnKey === '_creationTime' ? sort.order : false,
     sorter: (a: Doc<'firmwares'>, b: Doc<'firmwares'>) => a._creationTime - b._creationTime,
     render(row: Doc<'firmwares'>) {
       return new Date(row._creationTime).toLocaleString('zh-CN')
+    }
+  },
+  {
+    title: '备注',
+    key: 'remark' as const,
+    width: 160,
+    sortOrder: sort?.columnKey === 'remark' ? sort.order : false,
+    sorter: 'default' as const,
+    render(row: Doc<'firmwares'>) {
+      if (editingId.value === row._id) {
+        return h(NInput, {
+          value: editForm.value.remark,
+          onUpdateValue(v: string) { editForm.value.remark = v }
+        })
+      }
+      return row.remark
     }
   },
   {
@@ -313,8 +348,8 @@ const columns = computed<DataTableColumn[]>(() => {
           }, { default: () => h(NIcon, null, { default: () => h(EditFilled) }) }),
           h(NButton, {
             size: 'small',
-            loading: isRemoving.value,
-            onClick: () => removeFirmware({ id: row._id })
+            loading: deletingRows.value.has(row._id),
+            onClick: () => handleDelete(row._id)
           }, { default: () => h(NIcon, { color: 'red' }, { default: () => h(DeleteFilled) }) })
         ]
       })
@@ -350,7 +385,8 @@ const formValue = ref({
   name: '',
   md5: '',
   size: '',
-  fileName: ''
+  fileName: '',
+  remark: ''
 })
 
 const handleAdd = async (e: MouseEvent) => {
@@ -361,12 +397,14 @@ const handleAdd = async (e: MouseEvent) => {
         fileName: formValue.value.fileName,
         md5: formValue.value.md5,
         size: formValue.value.size,
-        name: formValue.value.name
+        name: formValue.value.name,
+        remark: formValue.value.remark
       })
       formValue.value.md5 = ''
       formValue.value.size = ''
       formValue.value.fileName = ''
       formValue.value.name = ''
+      formValue.value.remark = ''
     } else {
       console.log('error submit!!')
       return false
