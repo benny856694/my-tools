@@ -1,7 +1,7 @@
 <template>
   <div class="p-4 flex flex-col gap-4">
     <n-form ref="formRef" inline :model="formValue" :rules="rules">
-      <n-form-item path="name" label="名称(你自己好记的名字)">
+      <n-form-item path="name" label="名称">
         <NInput v-model:value.trim="formValue.name" @keydown.enter.prevent />
       </n-form-item>
       <NFormItem path="md5" label="Md5">

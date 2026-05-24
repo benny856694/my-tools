@@ -51,7 +51,7 @@
           </NButton>
         </n-form-item>
       </n-form>
-      <p>{{ url }}</p>
+      <p class="truncate">{{ url }}</p>
       <NInput
         v-model:value="updateResult"
         type="textarea"
