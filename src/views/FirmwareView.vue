@@ -135,8 +135,8 @@ const targetFirmwareOptions = computed(() => {
 const upgradeLogs = ref<FirmwareUpgradeLogEntry[]>([])
 
 const logColumns = [
-  { title: '时间', key: 'time', width: 90 },
-  { title: 'SN', key: 'sn', width: 160 },
+  { title: '时间', key: 'time', width: 160 },
+  { title: 'SN', key: 'sn', width: 240 },
   { title: '结果', key: 'result' }
 ]
 
