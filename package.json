@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run validate:types && vite build",
-    "deploy": "npx convex deploy --cmd 'npm run build'",
+    "deploy": "npx convex deploy -y --cmd \"npm run build\"",
     "validate:types": "vue-tsc --noEmit",
     "serve": "vite preview",
     "test": "vitest run --silent",
