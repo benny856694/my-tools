@@ -1,6 +1,6 @@
 <template>
-  <div class="p-4 flex flex-col">
-    <div ref="formRef" class="shrink-0">
+  <div class="p-4 flex flex-col" style="height: calc(100vh - 144px);">
+    <div class="shrink-0">
       <div v-if="isTargetFirmwarePending || isSourcesPending">Loading...</div>
       <n-form v-else inline :label-width="180">
         <NFormItem path="md5" label="SN">
@@ -23,7 +23,6 @@
           />
         </NFormItem>
         <NFormItem
-          ref="rPasswordFormItemRef"
           first
           path="Source"
           label="固件存储来源"
@@ -51,7 +50,7 @@
           </NButton>
         </n-form-item>
       </n-form>
-      <p class="truncate">{{ url }}</p>
+      <p class="truncate">{{ url || '请填写完整信息以生成推送链接' }}</p>
       <NInput
         v-model:value="updateResult"
         type="textarea"
@@ -60,7 +59,7 @@
         :autosize="{ minRows: 8 }"
       />
     </div>
-    <div class="mt-4 flex-1 min-h-0">
+    <div ref="tableContainerRef" class="mt-4 flex-1 min-h-0">
       <n-data-table
         :columns="logColumns"
         :data="upgradeLogs"
@@ -68,6 +67,7 @@
         :max-height="tableMaxHeight"
         :bordered="true"
         :single-line="false"
+        class="themed-scrollbar"
       />
     </div>
   </div>
@@ -79,7 +79,7 @@ import { api } from '../../convex/_generated/api'
 import { Doc, Id } from '../../convex/_generated/dataModel'
 import { NForm, NInput, NButton, NFormItem, NSelect, NDataTable } from 'naive-ui'
 
-import { computed, ref, watch, onMounted, onActivated, onBeforeUnmount } from 'vue'
+import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { OpenInNewFilled } from '@vicons/material'
 import { useMainStore } from '@/store'
 import { storeToRefs } from 'pinia'
@@ -225,6 +225,25 @@ watch(sources, () => {
   }
 })
 
+const tableContainerRef = ref<HTMLElement | null>(null)
+const tableMaxHeight = ref(0)
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(() => {
+  const el = tableContainerRef.value
+  if (el) {
+    resizeObserver = new ResizeObserver(() => {
+      tableMaxHeight.value = el.getBoundingClientRect().height
+    })
+    resizeObserver.observe(el)
+    tableMaxHeight.value = el.getBoundingClientRect().height
+  }
+})
+
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+})
+
 const handleUpdate = async (e: MouseEvent) => {
   e.preventDefault()
   try {
@@ -271,31 +290,41 @@ const testDownload = async (e: MouseEvent) => {
   }
 }
 
-const formRef = ref<HTMLElement | null>(null)
-const tableMaxHeight = ref(300)
-let resizeObserver: ResizeObserver | null = null
+</script>
 
-const updateTableHeight = () => {
-  if (formRef.value) {
-    const formRect = formRef.value.getBoundingClientRect()
-    const available = window.innerHeight - formRect.bottom - 24
-    tableMaxHeight.value = Math.max(200, available)
+<style lang="scss">
+.themed-scrollbar .n-data-table-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+
+    &:hover {
+      background: #a1a1a1;
+    }
   }
 }
 
-onMounted(() => {
-  resizeObserver = new ResizeObserver(updateTableHeight)
-  if (formRef.value) {
-    resizeObserver.observe(formRef.value)
+.dark .themed-scrollbar .n-data-table-wrapper {
+  scrollbar-color: #555 transparent;
+
+  &::-webkit-scrollbar-thumb {
+    background: #555;
+
+    &:hover {
+      background: #777;
+    }
   }
-  updateTableHeight()
-})
-
-onActivated(updateTableHeight)
-
-onBeforeUnmount(() => {
-  resizeObserver?.disconnect()
-})
-</script>
-
-<style lang=""></style>
+}
+</style>
