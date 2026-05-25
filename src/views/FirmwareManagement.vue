@@ -88,7 +88,8 @@ import {
   NIcon,
   NDataTable,
   NPagination,
-  NSpace
+  NSpace,
+  useDialog
 } from 'naive-ui'
 import { DeleteFilled, EditFilled, CheckFilled, CloseFilled } from '@vicons/material'
 import type { Doc, Id } from 'convex/_generated/dataModel'
@@ -170,15 +171,25 @@ const { mutate: removeFirmware } = useConvexMutation(
 
 const deletingRows = ref(new Set<Id<'firmwares'>>())
 
-const handleDelete = async (id: Id<'firmwares'>) => {
-  deletingRows.value = new Set(deletingRows.value).add(id)
-  try {
-    await removeFirmware({ id })
-  } finally {
-    const next = new Set(deletingRows.value)
-    next.delete(id)
-    deletingRows.value = next
-  }
+const dialog = useDialog()
+
+const handleDelete = (id: Id<'firmwares'>) => {
+  dialog.warning({
+    title: '确认删除',
+    content: '确认删除此固件?',
+    positiveText: '确认',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      deletingRows.value = new Set(deletingRows.value).add(id)
+      try {
+        await removeFirmware({ id })
+      } finally {
+        const next = new Set(deletingRows.value)
+        next.delete(id)
+        deletingRows.value = next
+      }
+    }
+  })
 }
 
 const { mutate: updateFirmware, isPending: isUpdatePending } = useConvexMutation(

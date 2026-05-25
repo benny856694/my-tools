@@ -7,7 +7,8 @@
     :locale="zhCN"
   >
     <NMessageProvider>
-      <n-layout position="absolute">
+      <NDialogProvider>
+        <n-layout position="absolute">
         <n-layout-header
           style="height: 64px; padding: 0 24px 24px 24px"
           bordered
@@ -65,12 +66,13 @@
           </n-layout-content>
         </n-layout>
       </n-layout>
+      </NDialogProvider>
     </NMessageProvider>
   </n-config-provider>
 </template>
 
 <script setup lang="ts">
-import { zhCN, darkTheme, lightTheme, NMessageProvider, NMenu, NIcon } from 'naive-ui'
+import { zhCN, darkTheme, lightTheme, NMessageProvider, NDialogProvider, NMenu, NIcon } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
 import { computed, ref, watchEffect } from 'vue'
 import type { Component } from 'vue'
