@@ -1,5 +1,5 @@
 <template>
-  <div class="p-4 flex flex-col" style="height: calc(100vh - 144px);">
+  <div class="p-4 flex flex-col" style="height: calc(100vh - 144px)">
     <div class="shrink-0">
       <div v-if="isTargetFirmwarePending || isSourcesPending">Loading...</div>
       <n-form v-else inline :label-width="180">
@@ -22,11 +22,7 @@
             placeholder="选择目标固件版本"
           />
         </NFormItem>
-        <NFormItem
-          first
-          path="Source"
-          label="固件存储来源"
-        >
+        <NFormItem first path="Source" label="固件存储来源">
           <NSelect
             v-model:value="selectedSourceId"
             :options="sourceOptions"
@@ -50,9 +46,14 @@
           </NButton>
         </n-form-item>
       </n-form>
-      <p class="truncate">{{ url || '请填写完整信息以生成推送链接' }}</p>
+      <NInput
+        :value="url"
+        placeholder="请填写完整信息以生成推送链接"
+        readonly
+      />
       <NInput
         v-model:value="updateResult"
+        class="mt-2"
         type="textarea"
         placeholder="推送结果"
         readonly
@@ -77,7 +78,14 @@
 import { useConvexQuery } from 'convex-vue'
 import { api } from '../../convex/_generated/api'
 import { Doc, Id } from '../../convex/_generated/dataModel'
-import { NForm, NInput, NButton, NFormItem, NSelect, NDataTable } from 'naive-ui'
+import {
+  NForm,
+  NInput,
+  NButton,
+  NFormItem,
+  NSelect,
+  NDataTable
+} from 'naive-ui'
 
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { OpenInNewFilled } from '@vicons/material'
@@ -289,7 +297,6 @@ const testDownload = async (e: MouseEvent) => {
     updateResult.value = `Error: ${err}`
   }
 }
-
 </script>
 
 <style lang="scss">
