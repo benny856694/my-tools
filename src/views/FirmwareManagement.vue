@@ -199,9 +199,6 @@ const { mutate: updateFirmware, isPending: isUpdatePending } = useConvexMutation
 const editingId = ref<Id<'firmwares'> | null>(null)
 const editForm = ref({
   name: '',
-  md5: '',
-  size: '',
-  fileName: '',
   remark: ''
 })
 
@@ -220,20 +217,17 @@ const startEdit = (item: Doc<'firmwares'>) => {
   editingId.value = item._id
   editForm.value = {
     name: item.name,
-    md5: item.md5,
-    size: item.size,
-    fileName: item.fileName,
     remark: item.remark ?? ''
   }
 }
 
 const cancelEdit = () => {
   editingId.value = null
-  editForm.value = { name: '', md5: '', size: '', fileName: '', remark: '' }
+  editForm.value = { name: '', remark: '' }
 }
 
 const saveEdit = async (id: Id<'firmwares'>) => {
-  await updateFirmware({ id, ...editForm.value })
+  await updateFirmware({ id, name: editForm.value.name, remark: editForm.value.remark })
   editingId.value = null
 }
 
@@ -263,12 +257,6 @@ const columns = computed<DataTableColumn[]>(() => {
     sortOrder: sort?.columnKey === 'fileName' ? sort.order : false,
     sorter: 'default' as const,
     render(row: Doc<'firmwares'>) {
-      if (editingId.value === row._id) {
-        return h(NInput, {
-          value: editForm.value.fileName,
-          onUpdateValue(v: string) { editForm.value.fileName = v }
-        })
-      }
       return row.fileName
     }
   },
@@ -279,12 +267,6 @@ const columns = computed<DataTableColumn[]>(() => {
     sortOrder: sort?.columnKey === 'md5' ? sort.order : false,
     sorter: 'default' as const,
     render(row: Doc<'firmwares'>) {
-      if (editingId.value === row._id) {
-        return h(NInput, {
-          value: editForm.value.md5,
-          onUpdateValue(v: string) { editForm.value.md5 = v }
-        })
-      }
       return row.md5
     }
   },
@@ -295,12 +277,6 @@ const columns = computed<DataTableColumn[]>(() => {
     sortOrder: sort?.columnKey === 'size' ? sort.order : false,
     sorter: (a: Doc<'firmwares'>, b: Doc<'firmwares'>) => Number(a.size) - Number(b.size),
     render(row: Doc<'firmwares'>) {
-      if (editingId.value === row._id) {
-        return h(NInput, {
-          value: editForm.value.size,
-          onUpdateValue(v: string) { editForm.value.size = v }
-        })
-      }
       return row.size
     }
   },
