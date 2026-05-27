@@ -18,6 +18,7 @@
           <NSelect
             v-model:value="targetFirmwareId"
             :options="targetFirmwareOptions"
+            filterable
             style="min-width: 180px"
             placeholder="选择目标固件版本"
           />
