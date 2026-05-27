@@ -51,6 +51,7 @@
         :value="url"
         placeholder="请填写完整信息以生成推送链接"
         readonly
+        @focus="($event.target as HTMLInputElement).select()"
       />
       <NInput
         v-model:value="updateResult"
