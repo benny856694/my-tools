@@ -84,7 +84,8 @@ import {
   NButton,
   NFormItem,
   NSelect,
-  NDataTable
+  NDataTable,
+  useMessage
 } from 'naive-ui'
 
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
@@ -109,6 +110,7 @@ const targetFirmwareId = ref<Id<'firmwares'> | null>(null)
 const sn = ref('')
 const updateResult = ref<string>('')
 const { selectedSourceId } = storeToRefs(useMainStore())
+const message = useMessage()
 
 const curVerOptions = [
   { label: '中国大陆', value: DeviceCurrentVersion.China },
@@ -263,6 +265,9 @@ const handleUpdate = async (e: MouseEvent) => {
     })
     const text = await resp.json()
     const resultText = JSON.stringify(text, null, 2)
+    if (text.message === '设备不存在') {
+      message.warning('设备不存在，请检查当前版本是否选择正确')
+    }
     updateResult.value = resultText
     addLogEntry(text.message)
   } catch (err) {
