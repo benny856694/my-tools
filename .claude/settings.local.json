@@ -11,7 +11,10 @@
       "Bash(node *)",
       "Bash(npx convex *)",
       "Bash(git add *)",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(git pull *)",
+      "Bash(git reset *)",
+      "Bash(git stash *)"
     ]
   }
 }
