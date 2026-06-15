@@ -8,6 +8,7 @@
             v-model:value="sn"
             :options="snOptions"
             filterable
+            clearable
             tag
             placeholder="输入或选择序列号"
             style="min-width: 240px"
