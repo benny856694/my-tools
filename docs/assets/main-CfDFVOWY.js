@@ -1,1 +1,0 @@
-import{T as t}from"./index-C5fV907x.js";const n=t("main",{state:()=>({counter:0,selectedSourceId:null}),getters:{count:({counter:e})=>e},actions:{incrementCounter(e){this.counter+=e}},persist:!0});export{n as u};
