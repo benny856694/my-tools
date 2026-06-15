@@ -28,6 +28,11 @@ const router = createRouter({
       path: '/firmman',
       name: 'firmwareManagement',
       component: () => import('@/views/FirmwareManagement.vue')
+    },
+    {
+      path: '/snman',
+      name: 'snManagement',
+      component: () => import('@/views/SnManagement.vue')
     }
   ]
 })

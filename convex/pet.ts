@@ -55,3 +55,47 @@ export const updateFirmware = mutation({
     })
   }
 })
+
+// --- Serial Numbers ---
+
+export const getSerialNumbers = query({
+  handler: async (ctx) => {
+    return await ctx.db.query('serialNumbers').collect()
+  }
+})
+
+export const addSerialNumber = mutation({
+  args: {
+    sn: v.string(),
+    remark: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert('serialNumbers', {
+      sn: args.sn,
+      remark: args.remark ?? ''
+    })
+  }
+})
+
+export const removeSerialNumber = mutation({
+  args: {
+    id: v.id('serialNumbers')
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.id)
+  }
+})
+
+export const updateSerialNumber = mutation({
+  args: {
+    id: v.id('serialNumbers'),
+    sn: v.string(),
+    remark: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      sn: args.sn,
+      remark: args.remark ?? ''
+    })
+  }
+})

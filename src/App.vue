@@ -79,7 +79,7 @@ import type { Component } from 'vue'
 import { appTheme } from '@/lib'
 import { h } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { HomeFilled, LinkFilled, PetsFilled } from '@vicons/material'
+import { HomeFilled, LinkFilled, PetsFilled, TagFilled } from '@vicons/material'
 
 const darkStore = localStorage.getItem('dark')
 const prefersDark: boolean = darkStore
@@ -153,6 +153,20 @@ const menuOptions: MenuOption[] = [
       ),
     key: 'firmware-management-view',
     icon: renderIcon(PetsFilled)
+  },
+  {
+    label: () =>
+      h(
+        RouterLink,
+        {
+          to: {
+            name: 'snManagement'
+          }
+        },
+        { default: () => 'SN管理' }
+      ),
+    key: 'sn-management-view',
+    icon: renderIcon(TagFilled)
   }
 ]
 

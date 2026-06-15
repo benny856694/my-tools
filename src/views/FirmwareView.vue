@@ -4,7 +4,14 @@
       <div v-if="isTargetFirmwarePending || isSourcesPending">Loading...</div>
       <n-form v-else inline :label-width="180">
         <NFormItem path="md5" label="SN">
-          <NInput v-model:value.trim="sn" placeholder="输入序列号" />
+          <NSelect
+            v-model:value="sn"
+            :options="snOptions"
+            filterable
+            tag
+            placeholder="输入或选择序列号"
+            style="min-width: 240px"
+          />
         </NFormItem>
         <NFormItem ref="curVerFormItemRef" path="md5" label="当前版本">
           <NPopover
@@ -115,10 +122,11 @@ const { data: sources, isPending: isSourcesPending } = useConvexQuery(
   api.pet.getSources,
   {}
 )
+const { data: serialNumbers } = useConvexQuery(api.pet.getSerialNumbers, {})
 
 const deviceCurVer = ref<DeviceCurrentVersion>(DeviceCurrentVersion.China)
 const targetFirmwareId = ref<Id<'firmwares'> | null>(null)
-const sn = ref('')
+const sn = ref<string | null>(null)
 const updateResult = ref<string>('')
 const { selectedSourceId } = storeToRefs(useMainStore())
 
@@ -144,6 +152,15 @@ const sourceOptions = computed(() => {
     ? sources.value.map((src: Doc<'sources'>) => ({
         label: src.name,
         value: src._id
+      }))
+    : []
+})
+
+const snOptions = computed(() => {
+  return serialNumbers.value
+    ? serialNumbers.value.map((s: Doc<'serialNumbers'>) => ({
+        label: s.sn + (s.remark ? ` (${s.remark})` : ''),
+        value: s.sn
       }))
     : []
 })

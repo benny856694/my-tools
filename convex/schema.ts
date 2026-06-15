@@ -12,5 +12,9 @@ export default defineSchema({
   sources: defineTable({
     name: v.string(),
     baseUrl: v.string()
+  }),
+  serialNumbers: defineTable({
+    sn: v.string(),
+    remark: v.optional(v.string())
   })
 })
