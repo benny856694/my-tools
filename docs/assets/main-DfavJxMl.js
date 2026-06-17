@@ -1,0 +1,1 @@
+import{a8 as t}from"./index-D3BWw1no.js";const n=t("main",{state:()=>({counter:0,selectedSourceId:null}),getters:{count:({counter:e})=>e},actions:{incrementCounter(e){this.counter+=e}},persist:!0});export{n as u};
