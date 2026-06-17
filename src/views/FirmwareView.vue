@@ -4,14 +4,12 @@
       <div v-if="isTargetFirmwarePending || isSourcesPending">Loading...</div>
       <n-form v-else inline :label-width="180">
         <NFormItem path="md5" label="SN">
-          <NSelect
+          <NAutoComplete
             v-model:value="sn"
-            :options="snOptions"
-            filterable
-            clearable
-            tag
+            :options="snAutoCompleteOptions"
             placeholder="输入或选择序列号"
             style="min-width: 240px"
+            clearable
           />
         </NFormItem>
         <NFormItem ref="curVerFormItemRef" path="md5" label="当前版本">
@@ -104,7 +102,8 @@ import {
   NFormItem,
   NSelect,
   NDataTable,
-  NPopover
+  NPopover,
+  NAutoComplete
 } from 'naive-ui'
 
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
@@ -127,7 +126,8 @@ const { data: serialNumbers } = useConvexQuery(api.pet.getSerialNumbers, {})
 
 const deviceCurVer = ref<DeviceCurrentVersion>(DeviceCurrentVersion.China)
 const targetFirmwareId = ref<Id<'firmwares'> | null>(null)
-const sn = ref<string | null>(null)
+const sn = ref<string | undefined>(undefined)
+const snOnly = computed(() => sn.value?.split(' ')[0]?.trimEnd() ?? '')
 const updateResult = ref<string>('')
 const { selectedSourceId } = storeToRefs(useMainStore())
 
@@ -157,14 +157,23 @@ const sourceOptions = computed(() => {
     : []
 })
 
-const snOptions = computed(() => {
-  return serialNumbers.value
-    ? serialNumbers.value.map((s: Doc<'serialNumbers'>) => ({
-        label: s.sn + (s.remark ? ` (${s.remark})` : ''),
+const snAutoCompleteOptions = computed<{ label: string; value: string }[]>(
+  () => {
+    if (!serialNumbers.value) return []
+    const query = sn.value?.toLowerCase() ?? ''
+    return serialNumbers.value
+      .filter(
+        (s: Doc<'serialNumbers'>) =>
+          !query ||
+          s.sn.toLowerCase().includes(query) ||
+          (s.remark && s.remark.toLowerCase().includes(query))
+      )
+      .map((s: Doc<'serialNumbers'>) => ({
+        label: s.remark ? `${s.sn} (${s.remark})` : s.sn,
         value: s.sn
       }))
-    : []
-})
+  }
+)
 
 interface FirmwareUpgradeLogEntry {
   id: string
@@ -199,7 +208,7 @@ const addLogEntry = (result: string) => {
       minute: '2-digit',
       second: '2-digit'
     }),
-    sn: sn.value || '-',
+    sn: snOnly.value || '-',
     result
   })
 }
@@ -211,7 +220,7 @@ const url = computed(() => {
   if (!selectedSourceId) {
     return ''
   }
-  if (!sn.value) {
+  if (!snOnly.value) {
     return ''
   }
   const targetFirmware = targetFirmwares.value?.find(
@@ -229,9 +238,9 @@ const url = computed(() => {
   }
 
   if (deviceCurVer.value === DeviceCurrentVersion.China) {
-    return `https://gw.pick-fun.com.cn/device/test/mqtt/upgrade?md5=${targetFirmware.md5}&size=${targetFirmware.size}&url=${encodeURIComponent(source.baseUrl + targetFirmware.fileName)}&sn=${sn.value}&test-verify=1111`
+    return `https://gw.pick-fun.com.cn/device/test/mqtt/upgrade?md5=${targetFirmware.md5}&size=${targetFirmware.size}&url=${encodeURIComponent(source.baseUrl + targetFirmware.fileName)}&sn=${snOnly.value}&test-verify=1111`
   } else {
-    return `https://gw.pick-fun.com/device/test/mqtt/upgrade?md5=${targetFirmware.md5}&size=${targetFirmware.size}&url=${encodeURIComponent(source.baseUrl + targetFirmware.fileName)}&sn=${sn.value}&test-verify=1111`
+    return `https://gw.pick-fun.com/device/test/mqtt/upgrade?md5=${targetFirmware.md5}&size=${targetFirmware.size}&url=${encodeURIComponent(source.baseUrl + targetFirmware.fileName)}&sn=${snOnly.value}&test-verify=1111`
   }
 })
 
