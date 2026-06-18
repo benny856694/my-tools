@@ -10,7 +10,7 @@
       <NDialogProvider>
         <n-layout position="absolute">
         <n-layout-header
-          style="height: 64px; padding: 0 24px 24px 24px"
+          style="height: 64px; padding: 0 16px 12px 16px"
           bordered
         >
           <div class="flex flex-row justify-between items-center">
@@ -35,11 +35,12 @@
           class="bg-white dark:bg-gray-800 dark:text-white text-gray-800 h-screen w-screen"
           has-sider
           position="absolute"
-          style="top: 64px; bottom: 64px"
+          style="top: 64px; bottom: 0; overflow: hidden"
         >
           <n-layout-sider
             data-cy="sidebar"
-            class="fixed h-full"
+            class="h-full"
+            collapsible
             collapse-mode="width"
             :width="180"
             :collapsed-width="64"
@@ -74,7 +75,7 @@
 <script setup lang="ts">
 import { zhCN, darkTheme, lightTheme, NMessageProvider, NDialogProvider, NMenu, NIcon } from 'naive-ui'
 import type { MenuOption } from 'naive-ui'
-import { computed, ref, watchEffect } from 'vue'
+import { computed, ref, watchEffect, onMounted, onBeforeUnmount } from 'vue'
 import type { Component } from 'vue'
 import { appTheme } from '@/lib'
 import { h } from 'vue'
@@ -174,7 +175,14 @@ watchEffect(() => {
   localStorage.setItem('dark', `${mode.value}`)
 })
 
-const collapsed = ref(false)
+const collapsed = ref(window.innerWidth < 768)
+
+const onResize = () => {
+  collapsed.value = window.innerWidth < 768
+}
+
+onMounted(() => window.addEventListener('resize', onResize))
+onBeforeUnmount(() => window.removeEventListener('resize', onResize))
 
 const handleTitleClick = (e: MouseEvent) => {
   e.preventDefault()

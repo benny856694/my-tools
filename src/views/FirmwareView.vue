@@ -2,13 +2,13 @@
   <div class="p-4 flex flex-col" style="height: calc(100vh - 144px)">
     <div class="shrink-0">
       <div v-if="isTargetFirmwarePending || isSourcesPending">Loading...</div>
-      <n-form v-else inline :label-width="180">
+      <n-form v-else :inline="!isMobile" :label-width="isMobile ? 'auto' : 180">
         <NFormItem path="md5" label="SN">
           <NAutoComplete
             v-model:value="sn"
             :options="snAutoCompleteOptions"
             placeholder="输入或选择序列号"
-            style="min-width: 240px"
+            :style="{ minWidth: isMobile ? '0' : '240px', width: isMobile ? '100%' : undefined }"
             clearable
           />
         </NFormItem>
@@ -22,7 +22,7 @@
               <NSelect
                 v-model:value="deviceCurVer"
                 :options="curVerOptions"
-                style="min-width: 180px"
+                :style="{ minWidth: isMobile ? '0' : '180px', width: isMobile ? '100%' : undefined }"
                 placeholder="选择版本"
               />
             </template>
@@ -34,7 +34,7 @@
             v-model:value="targetFirmwareId"
             :options="targetFirmwareOptions"
             filterable
-            style="min-width: 180px"
+            :style="{ minWidth: isMobile ? '0' : '180px', width: isMobile ? '100%' : undefined }"
             placeholder="选择目标固件版本"
           />
         </NFormItem>
@@ -42,24 +42,24 @@
           <NSelect
             v-model:value="selectedSourceId"
             :options="sourceOptions"
-            style="min-width: 180px"
+            :style="{ minWidth: isMobile ? '0' : '180px', width: isMobile ? '100%' : undefined }"
             placeholder="选择固件存储来源"
           />
         </NFormItem>
         <n-form-item>
-          <NButton type="primary" :disabled="!url" @click="handleUpdate">
-            推送升级包
-          </NButton>
-        </n-form-item>
-        <n-form-item>
-          <NButton :disabled="!firmwareUrl" @click="testDownload">
-            <template #icon>
-              <NIcon>
-                <OpenInNewFilled />
-              </NIcon>
-            </template>
-            测试固件下载
-          </NButton>
+          <div class="flex gap-2" :class="{ 'flex-wrap': isMobile }">
+            <NButton type="primary" :disabled="!url" @click="handleUpdate">
+              推送升级包
+            </NButton>
+            <NButton :disabled="!firmwareUrl" @click="testDownload">
+              <template #icon>
+                <NIcon>
+                  <OpenInNewFilled />
+                </NIcon>
+              </template>
+              测试固件下载
+            </NButton>
+          </div>
         </n-form-item>
       </n-form>
       <NInput
@@ -288,11 +288,19 @@ watch(sources, () => {
   }
 })
 
+const windowWidth = ref(window.innerWidth)
+const isMobile = computed(() => windowWidth.value < 640)
+
 const tableContainerRef = ref<HTMLElement | null>(null)
 const tableMaxHeight = ref(0)
 let resizeObserver: ResizeObserver | null = null
 
+const onWindowResize = () => {
+  windowWidth.value = window.innerWidth
+}
+
 onMounted(() => {
+  window.addEventListener('resize', onWindowResize)
   const el = tableContainerRef.value
   if (el) {
     resizeObserver = new ResizeObserver(() => {
@@ -304,6 +312,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', onWindowResize)
   resizeObserver?.disconnect()
   if (curVerPopoverTimer) clearTimeout(curVerPopoverTimer)
 })
