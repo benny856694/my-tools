@@ -14,7 +14,14 @@
           bordered
         >
           <div class="flex flex-row justify-between items-center">
-            <h2 @click="handleTitleClick">My Tools</h2>
+            <div class="flex items-center gap-2">
+              <n-button v-if="isMobile" quaternary @click="mobileMenuVisible = !mobileMenuVisible">
+                <template #icon>
+                  <n-icon :size="20"><MenuFilled /></n-icon>
+                </template>
+              </n-button>
+              <h2 @click="handleTitleClick">My Tools</h2>
+            </div>
             <n-switch v-model:value="mode" data-cy="dark-mode">
               <template #checked> Dark </template>
               <template #unchecked> Light </template>
@@ -33,21 +40,22 @@
         </n-layout-header>
         <n-layout
           class="bg-white dark:bg-gray-800 dark:text-white text-gray-800 h-screen w-screen"
-          has-sider
+          :has-sider="!isMobile"
           position="absolute"
           style="top: 64px; bottom: 0; overflow: hidden"
         >
+          <div v-if="isMobile && mobileMenuVisible" class="mobile-backdrop" @click="mobileMenuVisible = false" />
           <n-layout-sider
             data-cy="sidebar"
             class="h-full"
-            collapsible
+            :class="{ 'mobile-overlay': isMobile, 'open': isMobile && mobileMenuVisible }"
             collapse-mode="width"
             :width="180"
             :collapsed-width="64"
             :native-scrollbar="false"
             bordered
             :collapsed="collapsed"
-            show-trigger="arrow-circle"
+            :show-trigger="isMobile ? false : 'arrow-circle'"
             @collapse="collapsed = true"
             @expand="collapsed = false"
           >
@@ -56,6 +64,7 @@
               :collapsed="collapsed"
               :collapsed-width="64"
               :collapsed-icon-size="22"
+              @update:value="mobileMenuVisible = false"
             />
           </n-layout-sider>
           <n-layout-content :native-scrollbar="false">
@@ -80,7 +89,7 @@ import type { Component } from 'vue'
 import { appTheme } from '@/lib'
 import { h } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { HomeFilled, LinkFilled, PetsFilled, TagFilled } from '@vicons/material'
+import { HomeFilled, LinkFilled, PetsFilled, TagFilled, MenuFilled } from '@vicons/material'
 
 const darkStore = localStorage.getItem('dark')
 const prefersDark: boolean = darkStore
@@ -175,10 +184,13 @@ watchEffect(() => {
   localStorage.setItem('dark', `${mode.value}`)
 })
 
-const collapsed = ref(window.innerWidth < 768)
+const isMobile = ref(window.innerWidth < 768)
+const mobileMenuVisible = ref(false)
+const collapsed = ref(false)
 
 const onResize = () => {
-  collapsed.value = window.innerWidth < 768
+  isMobile.value = window.innerWidth < 768
+  if (isMobile.value) collapsed.value = false
 }
 
 onMounted(() => window.addEventListener('resize', onResize))
@@ -198,4 +210,25 @@ const handleTitleClick = (e: MouseEvent) => {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif
   -webkit-font-smoothing: antialiased
   -moz-osx-font-smoothing: grayscale
+
+.mobile-overlay
+  position: fixed !important
+  top: 64px
+  left: 0
+  bottom: 0
+  z-index: 1000
+  transform: translateX(-100%)
+  transition: transform 0.3s ease
+
+.mobile-overlay.open
+  transform: translateX(0)
+
+.mobile-backdrop
+  position: fixed
+  top: 64px
+  left: 0
+  right: 0
+  bottom: 0
+  background: rgba(0, 0, 0, 0.4)
+  z-index: 999
 </style>
