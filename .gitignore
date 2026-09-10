@@ -10,3 +10,4 @@ yarn-error.log
 reports
 cucumber-messages.ndjson
 docs
+*.zip
