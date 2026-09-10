@@ -77,10 +77,34 @@
         :autosize="{ minRows: 8 }"
       />
     </div>
-    <div ref="tableContainerRef" class="mt-4 flex-1 min-h-0">
+    <div ref="tableContainerRef" class="mt-4 flex flex-1 min-h-0 flex-col gap-2">
+      <div class="flex shrink-0 items-center gap-2" :class="{ 'flex-wrap': isMobile }">
+        <NInput
+          v-model:value="logSnFilter"
+          clearable
+          placeholder="按SN搜索"
+          :style="{ width: isMobile ? '100%' : '240px' }"
+        />
+        <span class="whitespace-nowrap text-sm text-gray-500">
+          {{ firmwareUpdateLogsData?.count ?? 0 }} 条记录
+        </span>
+        <div class="ml-auto">
+          <n-pagination
+            v-if="(firmwareUpdateLogsData?.count ?? 0) > 0"
+            :page="logPage"
+            :page-size="logPageSize"
+            :page-sizes="logPageSizes"
+            :item-count="firmwareUpdateLogsData?.count ?? 0"
+            show-size-picker
+            show-quick-jumper
+            @update:page="logPage = $event"
+            @update:page-size="onLogPageSizeChange"
+          />
+        </div>
+      </div>
       <n-data-table
         :columns="logColumns"
-        :data="upgradeLogs"
+        :data="firmwareUpdateLogsData?.logs ?? []"
         size="small"
         :max-height="tableMaxHeight"
         :bordered="true"
@@ -92,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { useConvexQuery } from 'convex-vue'
+import { useConvexMutation, useConvexQuery } from 'convex-vue'
 import { api } from '../../convex/_generated/api'
 import { Doc, Id } from '../../convex/_generated/dataModel'
 import {
@@ -103,11 +127,13 @@ import {
   NSelect,
   NDataTable,
   NPopover,
-  NAutoComplete
+  NAutoComplete,
+  NPagination,
+  NPopconfirm
 } from 'naive-ui'
 
-import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import { OpenInNewFilled } from '@vicons/material'
+import { computed, ref, watch, onMounted, onBeforeUnmount, h } from 'vue'
+import { OpenInNewFilled, DeleteOutlined } from '@vicons/material'
 import { useMainStore } from '@/store'
 import { storeToRefs } from 'pinia'
 
@@ -123,6 +149,31 @@ const { data: sources, isPending: isSourcesPending } = useConvexQuery(
   {}
 )
 const { data: serialNumbers } = useConvexQuery(api.pet.getSerialNumbers, {})
+
+// --- Server-side paginated logs ---
+const logSnFilter = ref('')
+const logPage = ref(1)
+const logPageSize = ref(10)
+const logPageSizes = [10, 20, 30]
+const logOffset = computed(() => (logPage.value - 1) * logPageSize.value)
+
+const logQueryArgs = computed(() => ({
+  snFilter: logSnFilter.value || undefined,
+  pageSize: logPageSize.value,
+  offset: logOffset.value
+}))
+
+const { data: firmwareUpdateLogsData } = useConvexQuery(
+  api.pet.getFirmwareUpdateLogs,
+  logQueryArgs
+)
+
+const { mutate: addFirmwareUpgradeLog } = useConvexMutation(
+  api.pet.addFirmwareUpgradeLog
+)
+const { mutate: deleteFirmwareUpdateLog } = useConvexMutation(
+  api.pet.deleteFirmwareUpdateLog
+)
 
 const deviceCurVer = ref<DeviceCurrentVersion>(DeviceCurrentVersion.China)
 const targetFirmwareId = ref<Id<'firmwares'> | null>(null)
@@ -175,13 +226,6 @@ const snAutoCompleteOptions = computed<{ label: string; value: string }[]>(
   }
 )
 
-interface FirmwareUpgradeLogEntry {
-  id: string
-  time: string
-  sn: string
-  result: string
-}
-
 const targetFirmwareOptions = computed(() => {
   return targetFirmwares.value
     ? targetFirmwares.value.map((fw: Doc<'firmwares'>) => ({
@@ -191,25 +235,59 @@ const targetFirmwareOptions = computed(() => {
     : []
 })
 
-const upgradeLogs = ref<FirmwareUpgradeLogEntry[]>([])
+const onLogPageSizeChange = (pageSize: number) => {
+  logPageSize.value = pageSize
+  logPage.value = 1
+}
+
+watch(logSnFilter, () => {
+  logPage.value = 1
+})
 
 const logColumns = [
-  { title: '时间', key: 'time', width: 160 },
+  {
+    title: '时间',
+    key: '_creationTime',
+    width: 180,
+    render(row: Doc<'firmwareUpdateLogs'>) {
+      return new Date(row._creationTime).toLocaleString('zh-CN')
+    }
+  },
   { title: 'SN', key: 'sn', width: 240 },
-  { title: '结果', key: 'result' }
+  { title: '目标固件', key: 'targetFirmware' },
+  { title: '结果', key: 'upgradeResult' },
+  {
+    title: '操作',
+    key: 'actions',
+    width: 60,
+    render(row: Doc<'firmwareUpdateLogs'>) {
+      return h(
+        NPopconfirm,
+        {
+          onPositiveClick: () => deleteFirmwareUpdateLog({ id: row._id })
+        },
+        {
+          trigger: () =>
+            h(
+              NButton,
+              { size: 'small', quaternary: true, type: 'error' },
+              { icon: () => h(DeleteOutlined) }
+            ),
+          default: () => '确定删除此日志?'
+        }
+      )
+    }
+  }
 ]
 
-const addLogEntry = (result: string) => {
-  upgradeLogs.value.unshift({
-    id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    time: new Date().toLocaleTimeString('en-US', {
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    }),
+const addLogEntry = async (result: string) => {
+  await addFirmwareUpgradeLog({
     sn: snOnly.value || '-',
-    result
+    result,
+    targetFirmware:
+      targetFirmwares.value?.find(
+        (fw: Doc<'firmwares'>) => fw._id === targetFirmwareId.value
+      )?.name ?? ''
   })
 }
 
@@ -338,11 +416,11 @@ const handleUpdate = async (e: MouseEvent) => {
       hideCurVerPopover()
     }
     updateResult.value = resultText
-    addLogEntry(text.message)
+    await addLogEntry(text.message)
   } catch (err) {
     const errorText = `错误: ${err}`
     updateResult.value = errorText
-    addLogEntry(errorText)
+    await addLogEntry(errorText)
   }
 }
 

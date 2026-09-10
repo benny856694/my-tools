@@ -16,5 +16,10 @@ export default defineSchema({
   serialNumbers: defineTable({
     sn: v.string(),
     remark: v.optional(v.string())
-  })
+  }),
+  firmwareUpdateLogs: defineTable({
+    sn: v.string(),
+    upgradeResult: v.string(),
+    targetFirmware: v.optional(v.string())
+  }).index('by_sn', ['sn'])
 })
