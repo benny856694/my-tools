@@ -9,3 +9,4 @@ yarn-error.log
 /.nyc_output
 reports
 cucumber-messages.ndjson
+docs
